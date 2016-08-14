@@ -1,0 +1,80 @@
+#!/bin/bash
+
+set -e
+MONTH_TO_DELETE=$(date --date '-2 month' +"%m-%Y")
+MONTH=$(date +"%m-%Y")
+DAY=$(date +"%d")
+
+BACKUPDIR="/backup/${MONTH}"
+BACKUP="${BACKUPDIR}/backup.${DAY}.tar.gpg"
+BACKUP_REMOTE=$(echo $BACKUP | sed -e 's/^\/backup\///')
+BACKUP_META="${BACKUPDIR}/backup_metadata.snar"
+BACKUP_META_REMOTE="$(echo $BACKUP_META | sed -e 's/^\/backup\///').gpg"
+
+if [ ! -z $EXCLUDES ]; then
+  EXCLUDE_ARGS=$(echo $EXCLUDES | sed -e 's/^/\-\-exclude=/' -e 's/,/ \-\-exclude=/')
+else
+  EXCLUDE_ARGS=""
+fi
+
+mkdir -p $BACKUPDIR
+
+function delete_files {
+  for FILE in $1; do
+    NAME=$(echo $FILE | awk -F':' '{ print $1 }')
+    ID=$(echo $FILE | awk -F':' '{ print $2 }')
+    b2 delete_file_version $NAME $ID
+  done
+}
+
+function list_files_eq {
+  list_files "==\"${1}\""
+}
+
+function list_files_starts {
+  list_files " | startswith(\"${1}\")"
+}
+
+function list_files {
+  b2 list_file_names $BUCKET | jq '.files' | jq -r ".[] | select(.fileName$1) | .fileName + \":\" + .fileId"
+}
+
+REMOTE_BACKUP_PRESENT=$(list_files_eq $BACKUP_REMOTE | wc -l)
+
+if [ "x$REMOTE_BACKUP_PRESENT" == "x0" ]; then
+
+  # If the backup metadata doesn't exist attempt to download it, without this a full backup will be created
+  if [ ! -e $BACKUP_META ]; then
+    set +e 
+    rm -f /tmp/backup_metadata.snar.gpg
+    rm -f /tmp/backup_metadata.snar
+  
+    b2 download_file_by_name $BUCKET $BACKUP_META_REMOTE /tmp/backup_metadata.snar.gpg
+    gpg --batch --yes --passphrase $GPG_PASSPHRASE /tmp/backup_metadata.snar.gpg
+    mv /tmp/backup_metadata.snar $BACKUP_META
+    set -e
+  fi
+
+  tar cvf - --listed-incremental=$BACKUP_META $BACKUP_TARGET $EXCLUDE_ARGS | gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc -o $BACKUP
+  b2 upload_file --threads 2 $BUCKET $BACKUP $BACKUP_REMOTE
+
+  gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc $BACKUP_META
+
+  set +e
+  delete_files $(list_files_eq $BACKUP_META_REMOTE)  
+  set -e
+  
+  b2 upload_file --threads 2 $BUCKET "${BACKUP_META}.gpg" $BACKUP_META_REMOTE
+
+
+  rm $BACKUP
+
+
+  if [ "${CLEAN_OLD_BACKUPS}" == "true" ]; then
+    FILES=$(list_files_starts $MONTH_TO_DELETE)
+    delete_files $FILES
+  fi
+else
+  echo "Backup already created for today"
+  exit 1
+fi
