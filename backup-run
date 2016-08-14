@@ -58,6 +58,10 @@ if [ "x$REMOTE_BACKUP_PRESENT" == "x0" ]; then
   tar cvf - --listed-incremental=$BACKUP_META $BACKUP_TARGET $EXCLUDE_ARGS | gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc -o $BACKUP
   b2 upload_file --threads 2 $BUCKET $BACKUP $BACKUP_REMOTE
 
+  set +e 
+  rm -f "${BACKUP_META}.gpg"
+  set -e
+
   gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc $BACKUP_META
 
   set +e
@@ -70,7 +74,7 @@ if [ "x$REMOTE_BACKUP_PRESENT" == "x0" ]; then
   rm $BACKUP
 
 
-  if [ "${CLEAN_OLD_BACKUPS}" == "true" ]; then
+  if [ "${CLEAN_OLD_BACKUPS}" = "true" ]; then
     FILES=$(list_files_starts $MONTH_TO_DELETE)
     delete_files $FILES
   fi

@@ -40,7 +40,7 @@ else
   echo Missing B2_ACCOUNT_ID or B2_APPLICATION_KEY environment variables, these are needed to upload files 2>&1
   exit 1
 fi
-if [ "$EXIT_CODE" == "1" ]; then
+if [ "x1" = "x${EXIT_CODE}" ]; then
   echo $OUTPUT 2>&1
   exit 1
 fi
