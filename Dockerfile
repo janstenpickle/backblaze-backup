@@ -7,8 +7,9 @@ RUN pip install --upgrade pip && pip install b2
 ENV GO_CRON_VERSION v0.0.7
 ENV AUTHORIZATION_FAIL_MAX_RETRIES 3
 ENV CLEAN_OLD_BACKUPS false
-ENV EXCLUDES ""
+ENV MONTHS_RETENTION 1
 ENV BACKUP_TARGET /data
+ENV EXCLUDES ""
 
 RUN curl -L https://github.com/odise/go-cron/releases/download/${GO_CRON_VERSION}/go-cron-linux.gz | zcat > /usr/local/bin/go-cron \
   && chmod u+x /usr/local/bin/go-cron

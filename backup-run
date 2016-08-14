@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-MONTH_TO_DELETE=$(date --date '-2 month' +"%m-%Y")
+MONTH_TO_DELETE=$(date --date "-$MONTHS_RETENTION month" +"%m-%Y")
 MONTH=$(date +"%m-%Y")
 DAY=$(date +"%d")
 
