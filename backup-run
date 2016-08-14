@@ -50,19 +50,19 @@ if [ "x$REMOTE_BACKUP_PRESENT" == "x0" ]; then
     rm -f /tmp/backup_metadata.snar
   
     b2 download_file_by_name $BUCKET $BACKUP_META_REMOTE /tmp/backup_metadata.snar.gpg
-    gpg --batch --yes --passphrase $GPG_PASSPHRASE /tmp/backup_metadata.snar.gpg
+    gpg --batch --yes --passphrase "$GPG_PASSPHRASE" /tmp/backup_metadata.snar.gpg
     mv /tmp/backup_metadata.snar $BACKUP_META
     set -e
   fi
 
-  tar cvf - --listed-incremental=$BACKUP_META $BACKUP_TARGET $EXCLUDE_ARGS | gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc -o $BACKUP
+  tar cvf - --listed-incremental=$BACKUP_META $BACKUP_TARGET $EXCLUDE_ARGS | gpg --batch --yes --passphrase "$GPG_PASSPHRASE" --symmetric --force-mdc -o $BACKUP
   b2 upload_file --threads 2 $BUCKET $BACKUP $BACKUP_REMOTE
 
   set +e 
   rm -f "${BACKUP_META}.gpg"
   set -e
 
-  gpg --batch --yes --passphrase $GPG_PASSPHRASE --symmetric --force-mdc $BACKUP_META
+  gpg --batch --yes --passphrase "$GPG_PASSPHRASE" --symmetric --force-mdc $BACKUP_META
 
   set +e
   delete_files $(list_files_eq $BACKUP_META_REMOTE)  
