@@ -1,0 +1,6 @@
+clean_old_backups: false
+months_retention: 1
+backup_dir: /backup
+b2_auth_retries: 3
+backup_targets:
+  /data:

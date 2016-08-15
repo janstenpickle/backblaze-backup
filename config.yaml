@@ -1,0 +1,4 @@
+bucket: bucket_name
+gpg_passphrase: test
+b2_account_id: id
+b2_application_key: key
