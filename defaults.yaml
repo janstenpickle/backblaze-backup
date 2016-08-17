@@ -1,3 +1,4 @@
+base_dir: /derp 
 clean_old_backups: false
 months_retention: 1
 backup_dir: /backup
