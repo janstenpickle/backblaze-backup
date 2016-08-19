@@ -7,7 +7,7 @@ require 'fileutils'
 @date_format='%m-%y'
 
 defaults = YAML::load_file('/defaults.yaml')
-config = defaults.merge(YAML::load_file(ENV['BACKUP_CONFIG'])
+config = defaults.merge(YAML::load_file(ENV['BACKUP_CONFIG']))
 @date = DateTime.now
 @day = @date.strftime('%d')
 @month = @date.strftime(@date_format)
